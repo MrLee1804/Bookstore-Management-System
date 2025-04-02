@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+
+{% block title %}Shopping Cart{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-md-8">
+            <!-- Cart Items -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Shopping Cart</h5>
+                    <span class="badge bg-primary">{{ cart.items|length }} items</span>
+                </div>
+                <div class="card-body">
+                    {% if cart.items %}
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Price</th>
+                                    <th>Quantity</th>
+                                    <th>Total</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in cart.items %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <img src="{{ item.book.cover_image }}" alt="{{ item.book.title }}" class="me-3" style="width: 60px; height: 80px; object-fit: cover;">
+                                            <div>
+                                                <h6 class="mb-0">{{ item.book.title }}</h6>
+                                                <p class="text-muted mb-0">{{ item.book.author }}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>${{ "%.2f"|format(item.book.price) }}</td>
+                                    <td>
+                                        <div class="input-group" style="width: 120px;">
+                                            <button class="btn btn-outline-secondary" type="button" onclick="updateQuantity({{ item.book.id }}, -1)">-</button>
+                                            <input type="number" class="form-control text-center" value="{{ item.quantity }}" min="1" max="{{ item.book.stock }}" onchange="updateQuantity({{ item.book.id }}, this.value)">
+                                            <button class="btn btn-outline-secondary" type="button" onclick="updateQuantity({{ item.book.id }}, 1)">+</button>
+                                        </div>
+                                    </td>
+                                    <td>${{ "%.2f"|format(item.book.price * item.quantity) }}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-danger" onclick="removeFromCart({{ item.book.id }})">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                        <h3>Your cart is empty</h3>
+                        <p class="text-muted">Add some books to your cart to proceed with checkout!</p>
+                        <a href="{{ url_for('books') }}" class="btn btn-primary">
+                            <i class="fas fa-book me-2"></i>Browse Books
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Summary -->
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Order Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Subtotal</span>
+                        <span>${{ "%.2f"|format(cart.subtotal) }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Shipping</span>
+                        <span>${{ "%.2f"|format(cart.shipping) }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Tax</span>
+                        <span>${{ "%.2f"|format(cart.tax) }}</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between mb-3">
+                        <strong>Total</strong>
+                        <strong>${{ "%.2f"|format(cart.total) }}</strong>
+                    </div>
+                    <button class="btn btn-primary w-100" onclick="proceedToCheckout()" {% if not cart.items %}disabled{% endif %}>
+                        <i class="fas fa-lock me-2"></i>Proceed to Checkout
+                    </button>
+                </div>
+            </div>
+
+            <!-- Payment Methods -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Payment Methods</h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="paymentMethod" id="creditCard" checked>
+                        <label class="form-check-label" for="creditCard">
+                            <i class="fas fa-credit-card me-2"></i>Credit Card
+                        </label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="paymentMethod" id="paypal">
+                        <label class="form-check-label" for="paypal">
+                            <i class="fab fa-paypal me-2"></i>PayPal
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="paymentMethod" id="bankTransfer">
+                        <label class="form-check-label" for="bankTransfer">
+                            <i class="fas fa-university me-2"></i>Bank Transfer
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom CSS -->
+<style>
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.table th {
+    font-weight: 600;
+}
+
+.input-group .form-control {
+    border-left: none;
+    border-right: none;
+}
+
+.input-group .btn {
+    border-radius: 0;
+}
+
+.input-group .btn:first-child {
+    border-top-left-radius: 0.25rem;
+    border-bottom-left-radius: 0.25rem;
+}
+
+.input-group .btn:last-child {
+    border-top-right-radius: 0.25rem;
+    border-bottom-right-radius: 0.25rem;
+}
+
+.form-check-input:checked {
+    background-color: #2470dc;
+    border-color: #2470dc;
+}
+</style>
+
+<!-- JavaScript -->
+<script>
+function updateQuantity(bookId, change) {
+    let quantity;
+    if (typeof change === 'number') {
+        const input = document.querySelector(`input[onchange*="${bookId}"]`);
+        quantity = parseInt(input.value) + change;
+    } else {
+        quantity = parseInt(change);
+    }
+
+    fetch('/cart/update', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            book_id: bookId,
+            quantity: quantity
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error updating quantity');
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function removeFromCart(bookId) {
+    fetch('/cart/remove', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            book_id: bookId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error removing item from cart');
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function proceedToCheckout() {
+    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').id;
+    window.location.href = `/checkout?payment=${paymentMethod}`;
+}
+</script>
+{% endblock %} 

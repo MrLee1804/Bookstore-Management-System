@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}Order Confirmation{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <!-- Success Message -->
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                    <h3>Thank You for Your Order!</h3>
+                    <p class="text-muted">Order #{{ order.id }} has been placed successfully.</p>
+                    <p>A confirmation email has been sent to {{ current_user.email }}</p>
+                </div>
+            </div>
+
+            <!-- Order Details -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Order Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6>Order Information</h6>
+                            <p class="mb-1">Order ID: #{{ order.id }}</p>
+                            <p class="mb-1">Date: {{ order.date.strftime('%Y-%m-%d %H:%M') }}</p>
+                            <p class="mb-1">Status: <span class="badge bg-success">{{ order.status|title }}</span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Payment Information</h6>
+                            <p class="mb-1">Payment Method: {{ order.payment_method|title }}</p>
+                            <p class="mb-1">Transaction ID: {{ order.transaction_id }}</p>
+                            <p class="mb-1">Amount: ${{ "%.2f"|format(order.total_amount) }}</p>
+                        </div>
+                    </div>
+
+                    <h6 class="mb-3">Shipping Address</h6>
+                    <p class="mb-0">{{ order.shipping_address.first_name }} {{ order.shipping_address.last_name }}</p>
+                    <p class="mb-0">{{ order.shipping_address.address }}</p>
+                    <p class="mb-0">{{ order.shipping_address.city }}, {{ order.shipping_address.state }} {{ order.shipping_address.zip_code }}</p>
+                    <p class="mb-0">{{ order.shipping_address.country }}</p>
+                </div>
+            </div>
+
+            <!-- Order Items -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Order Items</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Price</th>
+                                    <th>Quantity</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in order.items %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <img src="{{ item.book.cover_image }}" alt="{{ item.book.title }}" class="me-3" style="width: 60px; height: 80px; object-fit: cover;">
+                                            <div>
+                                                <h6 class="mb-0">{{ item.book.title }}</h6>
+                                                <p class="text-muted mb-0">{{ item.book.author }}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>${{ "%.2f"|format(item.book.price) }}</td>
+                                    <td>{{ item.quantity }}</td>
+                                    <td>${{ "%.2f"|format(item.book.price * item.quantity) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="3" class="text-end"><strong>Subtotal</strong></td>
+                                    <td>${{ "%.2f"|format(order.subtotal) }}</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3" class="text-end"><strong>Shipping</strong></td>
+                                    <td>${{ "%.2f"|format(order.shipping) }}</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3" class="text-end"><strong>Tax</strong></td>
+                                    <td>${{ "%.2f"|format(order.tax) }}</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3" class="text-end"><strong>Total</strong></td>
+                                    <td><strong>${{ "%.2f"|format(order.total_amount) }}</strong></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Next Steps -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Next Steps</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="text-center mb-3">
+                                <i class="fas fa-envelope fa-2x text-primary mb-2"></i>
+                                <h6>Check Your Email</h6>
+                                <p class="text-muted small">We'll send you updates about your order status.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center mb-3">
+                                <i class="fas fa-truck fa-2x text-success mb-2"></i>
+                                <h6>Track Your Order</h6>
+                                <p class="text-muted small">Monitor your order's shipping progress.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center mb-3">
+                                <i class="fas fa-book fa-2x text-warning mb-2"></i>
+                                <h6>Continue Shopping</h6>
+                                <p class="text-muted small">Browse more books in our collection.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('orders') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-list me-2"></i>View All Orders
+                        </a>
+                        <a href="{{ url_for('books') }}" class="btn btn-primary">
+                            <i class="fas fa-shopping-cart me-2"></i>Continue Shopping
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom CSS -->
+<style>
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.table th {
+    font-weight: 600;
+}
+
+.badge {
+    font-size: 0.875rem;
+    padding: 0.5em 0.75em;
+}
+
+.btn-primary {
+    background-color: #2470dc;
+    border-color: #2470dc;
+}
+
+.btn-primary:hover {
+    background-color: #1b5ab0;
+    border-color: #1b5ab0;
+}
+
+.btn-outline-primary {
+    color: #2470dc;
+    border-color: #2470dc;
+}
+
+.btn-outline-primary:hover {
+    background-color: #2470dc;
+    border-color: #2470dc;
+}
+</style>
+{% endblock %} 

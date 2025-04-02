@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}My Wishlist{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        <img src="{{ url_for('static', filename='images/default-avatar.png') }}" alt="Profile Picture" class="rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+                        <h4>{{ current_user.username }}</h4>
+                        <p class="text-muted">{{ current_user.email }}</p>
+                    </div>
+                    <div class="list-group">
+                        <a href="{{ url_for('profile') }}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-user me-2"></i>Profile
+                        </a>
+                        <a href="{{ url_for('orders') }}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-shopping-bag me-2"></i>My Orders
+                        </a>
+                        <a href="{{ url_for('wishlist') }}" class="list-group-item list-group-item-action active">
+                            <i class="fas fa-heart me-2"></i>Wishlist
+                        </a>
+                        <a href="{{ url_for('settings') }}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-cog me-2"></i>Settings
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9">
+            <!-- Wishlist Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>My Wishlist</h2>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-outline-secondary" onclick="clearWishlist()">
+                        <i class="fas fa-trash me-2"></i>Clear All
+                    </button>
+                </div>
+            </div>
+
+            <!-- Wishlist Items -->
+            <div class="row" id="wishlistItems">
+                {% for book in wishlist %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <img src="{{ book.cover_image }}" class="card-img-top" alt="{{ book.title }}" style="height: 300px; object-fit: cover;">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ book.title }}</h5>
+                            <p class="card-text text-muted">{{ book.author }}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-primary fw-bold">${{ "%.2f"|format(book.price) }}</span>
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="addToCart({{ book.id }})">
+                                        <i class="fas fa-shopping-cart"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="removeFromWishlist({{ book.id }})">
+                                        <i class="fas fa-heart"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <small class="text-muted">Stock: {{ book.stock }}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Empty Wishlist Message -->
+            {% if not wishlist %}
+            <div class="text-center py-5">
+                <i class="fas fa-heart-broken fa-3x text-muted mb-3"></i>
+                <h3>Your wishlist is empty</h3>
+                <p class="text-muted">Add some books to your wishlist to keep track of them!</p>
+                <a href="{{ url_for('books') }}" class="btn btn-primary">
+                    <i class="fas fa-book me-2"></i>Browse Books
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Clear Wishlist Modal -->
+<div class="modal fade" id="clearWishlistModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Clear Wishlist</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to remove all books from your wishlist? This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="confirmClearWishlist()">Clear All</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom CSS -->
+<style>
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.list-group-item {
+    border-left: none;
+    border-right: none;
+}
+
+.list-group-item:first-child {
+    border-top: none;
+}
+
+.list-group-item:last-child {
+    border-bottom: none;
+}
+
+.list-group-item.active {
+    background-color: #2470dc;
+    border-color: #2470dc;
+}
+
+.btn-group .btn {
+    padding: 0.25rem 0.5rem;
+}
+
+.modal-content {
+    border-radius: 0.5rem;
+}
+
+.modal-header {
+    border-bottom: 1px solid rgba(0,0,0,.125);
+}
+
+.modal-footer {
+    border-top: 1px solid rgba(0,0,0,.125);
+}
+
+.card-img-top {
+    transition: transform 0.2s;
+}
+
+.card:hover .card-img-top {
+    transform: scale(1.05);
+}
+</style>
+
+<!-- JavaScript -->
+<script>
+function addToCart(bookId) {
+    fetch('/cart/add', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            book_id: bookId,
+            quantity: 1
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Book added to cart successfully!');
+        } else {
+            alert('Error adding book to cart');
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function removeFromWishlist(bookId) {
+    fetch(`/wishlist/remove/${bookId}`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error removing book from wishlist');
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function clearWishlist() {
+    new bootstrap.Modal(document.getElementById('clearWishlistModal')).show();
+}
+
+function confirmClearWishlist() {
+    fetch('/wishlist/clear', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error clearing wishlist');
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+</script>
+{% endblock %} 
